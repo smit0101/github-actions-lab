@@ -1,0 +1,32 @@
+name: Metadata and Contexts
+
+on: [push]
+
+env:
+  WORKFLOW_LEVEL_VAR: "I am global to this file"
+
+jobs:
+  inspect-metadata:
+    runs-on: ubuntu-latest
+    env:
+      JOB_LEVEL_VAR: "I am local to this job"
+
+    steps:
+      - name: Dump GitHub Context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "Contexts are interpolated BEFORE the shell runs."
+          echo "The current actor is: ${{ github.actor }}"
+          echo "The event type is: ${{ github.event_name }}"
+          # We use toJson to see the full object structure
+          echo "$GITHUB_CONTEXT" | jq . | head -n 20 # Show the first 20 lines of the JSON
+
+      - name: Environment Variable Scoping
+        env:
+          STEP_LEVEL_VAR: "I am local to this step"
+        run: |
+          echo "Workflow Var: $WORKFLOW_LEVEL_VAR"
+          echo "Job Var: $JOB_LEVEL_VAR"
+          echo "Step Var: $STEP_LEVEL_VAR"
+          echo "Default GitHub Env Var (GITHUB_REPOSITORY): $GITHUB_REPOSITORY"
