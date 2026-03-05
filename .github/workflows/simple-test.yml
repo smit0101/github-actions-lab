@@ -1,0 +1,30 @@
+name: Simple Persistence Test
+
+on: [push]
+
+jobs:
+  job-one:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create File
+        run: echo "Machine 1 created this" > shared.txt
+
+      - name: Save file to GitHub Storage
+        uses: actions/upload-artifact@v4
+        with:
+          name: my-shared-file
+          path: shared.txt
+
+  job-two:
+    runs-on: ubuntu-latest
+    needs: job-one # This ensures job-two waits for job-one
+    steps:
+      - name: Get file from GitHub Storage
+        uses: actions/download-artifact@v4
+        with:
+          name: my-shared-file
+
+      - name: Read File
+        run: |
+          echo "I am on a new machine. Let's see if the file is here:"
+          cat shared.txt
