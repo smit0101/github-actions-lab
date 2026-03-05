@@ -1,0 +1,17 @@
+name: Hello World Workflow
+
+on: [push]
+
+jobs:
+  say-hello:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Print Hello World
+        run: echo "Hello, GitHub Actions!"
+
+      - name: Environment Info
+        run: |
+          echo "Kernel: $(uname -a)"
+          echo "User: $(whoami)"
+          echo "Shell: $SHELL"
