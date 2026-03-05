@@ -1,0 +1,47 @@
+name: Persistence and Artifacts
+
+on: [push]
+
+jobs:
+  build-stage:
+    runs-on: ubuntu-latest
+    # We define job-level outputs so other jobs can see them
+    outputs:
+      build_id: ${{ steps.generate-id.outputs.ID }}
+    
+    steps:
+      - name: Generate Dynamic ID
+        id: generate-id
+        run: |
+          # Generate a random ID
+          UNIQUE_ID="build-$(date +%s)"
+          echo "Generated ID: $UNIQUE_ID"
+          # Technical way to pass variables to subsequent steps and jobs
+          echo "ID=$UNIQUE_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Create a Fake Build Artifact
+        run: |
+          echo "Binary content for ${{ steps.generate-id.outputs.ID }}" > build_output.txt
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifact
+          path: build_output.txt
+
+  deploy-stage:
+    runs-on: ubuntu-latest
+    # This job will not start until build-stage finishes successfully
+    needs: build-stage
+    
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifact
+
+      - name: Verify Persistence
+        run: |
+          echo "Using Build ID from previous job context: ${{ needs.build-stage.outputs.build_id }}"
+          echo "Reading content from downloaded artifact:"
+          cat build_output.txt
