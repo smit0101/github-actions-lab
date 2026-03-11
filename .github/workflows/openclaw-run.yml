@@ -27,14 +27,22 @@ jobs:
           openclaw --version || echo "openclaw installed"
           openclaw-cli --version || echo "openclaw-cli installed"
 
-      - name: Run OpenClaw Prompt
+      - name: Run OpenClaw
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          # Set the default model for OpenClaw to use Gemini
           OPENCLAW_MODEL: "gemini-2.0-flash-exp"
         run: |
-          # Use openclaw-cli to send a one-off prompt
-          # Redirecting output to a file
+          # 1. Start the OpenClaw gateway in the background
+          echo "Starting OpenClaw Gateway..."
+          openclaw gateway start &
+          
+          # 2. Wait for the gateway to be ready (default port 18789)
+          echo "Waiting for gateway to be ready on port 18789..."
+          timeout 60s bash -c 'until echo > /dev/tcp/127.0.0.1/18789; do sleep 2; done' || (echo "Gateway failed to start" && exit 1)
+          echo "Gateway is UP!"
+
+          # 3. Use openclaw-cli to send the prompt
+          echo "Sending prompt: ${{ github.event.inputs.prompt }}"
           openclaw-cli ask "${{ github.event.inputs.prompt }}" > response.txt
           
           echo "--- Response Saved ---"
