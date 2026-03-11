@@ -1,0 +1,47 @@
+name: OpenClaw Prompt Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: 'The prompt to send to OpenClaw'
+        required: true
+        default: 'Summarize the current state of AI agents in 3 sentences.'
+
+jobs:
+  run-openclaw:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install OpenClaw
+        run: |
+          npm install -g openclaw openclaw-cli
+          # Verify installation
+          openclaw --version || echo "openclaw installed"
+          openclaw-cli --version || echo "openclaw-cli installed"
+
+      - name: Run OpenClaw Prompt
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # Set the default model for OpenClaw to use Gemini
+          OPENCLAW_MODEL: "gemini-2.0-flash-exp"
+        run: |
+          # Use openclaw-cli to send a one-off prompt
+          # Redirecting output to a file
+          openclaw-cli ask "${{ github.event.inputs.prompt }}" > response.txt
+          
+          echo "--- Response Saved ---"
+          cat response.txt
+
+      - name: Upload Response Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openclaw-response
+          path: response.txt
