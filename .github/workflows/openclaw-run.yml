@@ -33,7 +33,7 @@ jobs:
         run: |
           # 1. Start the OpenClaw gateway in the background
           echo "Starting OpenClaw Gateway..."
-          openclaw gateway start &
+          openclaw gateway &
           
           # 2. Wait for the gateway to be ready (default port 18789)
           echo "Waiting for gateway to be ready on port 18789..."
