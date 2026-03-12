@@ -30,7 +30,8 @@ jobs:
       - name: Run OpenClaw
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          OPENCLAW_MODEL: "google/gemini-2.0-flash-exp"
+          OPENCLAW_DEFAULT_PROVIDER: "google"
+          OPENCLAW_MODEL: "gemini-2.0-flash-exp"
           OPENCLAW_AGENT_MODEL: "google/gemini-2.0-flash-exp"
           OPENCLAW_SKIP_CHANNELS: "1"
           OPENCLAW_SKIP_PROVIDERS: "1"
@@ -44,19 +45,23 @@ jobs:
           echo "I am a helpful AI assistant running in a GitHub Action." > $OPENCLAW_WORKSPACE/SOUL.md
           echo "I am a developer testing OpenClaw in CI." > $OPENCLAW_WORKSPACE/USER.md
 
-          # 3. Create global openclaw.json to force Google provider
+          # 3. Create global openclaw.json to force Google provider and set env vars
           echo '{
-            "agents": { "defaults": { "model": "google/gemini-2.0-flash-exp" } },
-            "models": { "providers": { "google": { "apiKey": "'"$GEMINI_API_KEY"'" } } }
+            "agents": { "defaults": { "model": "google/gemini-2.0-flash-exp", "provider": "google" } },
+            "models": { "providers": { "google": { "apiKey": "'"$GEMINI_API_KEY"'" } } },
+            "env": { "vars": { "OPENCLAW_DEFAULT_PROVIDER": "google" } }
           }' > /home/runner/.openclaw/openclaw.json
 
-          # 4. Create auth-profiles.json in both locations
-          echo '{"google": {"apiKey": "'"$GEMINI_API_KEY"'"}}' > /home/runner/.openclaw/agents/main/agent/auth-profiles.json
-          echo '{"google": {"apiKey": "'"$GEMINI_API_KEY"'"}}' > /home/runner/.openclaw/auth-profiles.json
+          # 4. Create auth-profiles.json in multiple possible locations
+          AUTH_JSON='{"google": {"apiKey": "'"$GEMINI_API_KEY"'"}}'
+          echo "$AUTH_JSON" > /home/runner/.openclaw/agents/main/agent/auth-profiles.json
+          echo "$AUTH_JSON" > /home/runner/.openclaw/auth-profiles.json
+          echo "$AUTH_JSON" > /home/runner/.openclaw/auth.json
 
-          # 5. Use 'agent --local' with an explicit model override
+          # 5. Use 'agent --local' with an explicit model override and agent name
           echo "Running OpenClaw agent locally..."
           openclaw agent --local \
+            --agent main \
             --model "google/gemini-2.0-flash-exp" \
             --session-id "ci-session-$(date +%s)" \
             --message "${{ github.event.inputs.prompt }}" > response.txt
