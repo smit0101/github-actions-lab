@@ -31,14 +31,21 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENCLAW_MODEL: "google/gemini-2.0-flash-exp"
-          # Skip searching for a background gateway
           OPENCLAW_SKIP_CHANNELS: "1"
           OPENCLAW_SKIP_PROVIDERS: "1"
+          OPENCLAW_WORKSPACE: ${{ github.workspace }}
         run: |
-          # Use 'agent --local' to run the turn directly in this process
-          # This avoids the need for a background gateway.
+          # 1. Create a minimal agent profile for 'main'
+          mkdir -p $OPENCLAW_WORKSPACE
+          echo "I am a helpful AI assistant running in a GitHub Action." > $OPENCLAW_WORKSPACE/SOUL.md
+          echo "I am a developer testing OpenClaw in CI." > $OPENCLAW_WORKSPACE/USER.md
+
+          # 2. Use 'agent --local' with a specified agent and session
           echo "Running OpenClaw agent locally..."
-          openclaw agent --local --allow-unconfigured --message "${{ github.event.inputs.prompt }}" > response.txt
+          openclaw agent --local --allow-unconfigured \
+            --agent main \
+            --session-id "ci-session-$(date +%s)" \
+            --message "${{ github.event.inputs.prompt }}" > response.txt
           
           echo "--- Response Saved ---"
           cat response.txt
