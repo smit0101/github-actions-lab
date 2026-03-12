@@ -30,6 +30,7 @@ jobs:
       - name: Run OpenClaw
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENCLAW_DEFAULT_PROVIDER: "google"
           OPENCLAW_MODEL: "google/gemini-1.5-flash"
           OPENCLAW_AGENT_MODEL: "google/gemini-1.5-flash"
@@ -45,14 +46,12 @@ jobs:
           echo "I am a helpful AI assistant running in a GitHub Action." > $OPENCLAW_WORKSPACE/SOUL.md
           echo "I am a developer testing OpenClaw in CI." > $OPENCLAW_WORKSPACE/USER.md
 
-          # 3. Create global openclaw.json with a more complete schema
-          # Using both baseUrl and required fields
+          # 3. Create global openclaw.json with a simplified, standard schema
           echo '{
             "models": {
               "providers": {
                 "google": {
                   "apiKey": "'"$GEMINI_API_KEY"'",
-                  "baseUrl": "https://generativelanguage.googleapis.com",
                   "models": [
                     { 
                       "id": "gemini-1.5-flash",
@@ -69,9 +68,10 @@ jobs:
             }
           }' > /home/runner/.openclaw/openclaw.json
 
-          # 4. Attempt to "onboard" headless-ly to fix config
-          # This might fail in some environments but it's worth a try for auto-repair
-          openclaw onboard --quick-start --auth-choice google-gemini --gemini-api-key "$GEMINI_API_KEY" || echo "Onboarding skipped"
+          # 4. Create auth-profiles.json as a fallback
+          AUTH_JSON='{"google": {"apiKey": "'"$GEMINI_API_KEY"'"}}'
+          echo "$AUTH_JSON" > /home/runner/.openclaw/agents/main/agent/auth-profiles.json
+          echo "$AUTH_JSON" > /home/runner/.openclaw/auth-profiles.json
 
           # 5. Run the agent locally
           echo "Running OpenClaw agent locally..."
