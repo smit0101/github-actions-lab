@@ -30,24 +30,15 @@ jobs:
       - name: Run OpenClaw
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          OPENCLAW_AGENT_MODEL: "google/gemini-2.0-flash-exp"
-          OPENCLAW_GATEWAY_TOKEN: "ci-secret-token"
-          OPENCLAW_BASE_URL: "http://127.0.0.1:18789"
+          OPENCLAW_MODEL: "google/gemini-2.0-flash-exp"
+          # Skip searching for a background gateway
           OPENCLAW_SKIP_CHANNELS: "1"
+          OPENCLAW_SKIP_PROVIDERS: "1"
         run: |
-          # 1. Start the OpenClaw gateway in the background
-          echo "Starting OpenClaw Gateway..."
-          openclaw gateway run --allow-unconfigured --port 18789 --token $OPENCLAW_GATEWAY_TOKEN &
-          
-          # 2. Wait for the gateway to be ready
-          echo "Waiting for gateway to be ready on port 18789..."
-          timeout 60s bash -c 'until echo > /dev/tcp/127.0.0.1/18789; do sleep 2; done' || (echo "Gateway failed to start" && exit 1)
-          echo "Gateway is UP!"
-
-          # 3. Use the agent command to send the prompt
-          echo "Sending prompt: ${{ github.event.inputs.prompt }}"
-          # 'agent' is the core command, --message sends the prompt
-          openclaw agent --message "${{ github.event.inputs.prompt }}" > response.txt
+          # Use 'agent --local' to run the turn directly in this process
+          # This avoids the need for a background gateway.
+          echo "Running OpenClaw agent locally..."
+          openclaw agent --local --allow-unconfigured --message "${{ github.event.inputs.prompt }}" > response.txt
           
           echo "--- Response Saved ---"
           cat response.txt
