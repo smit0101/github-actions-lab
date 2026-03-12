@@ -31,8 +31,8 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENCLAW_DEFAULT_PROVIDER: "google"
-          OPENCLAW_MODEL: "google/gemini-2.0-flash-exp"
-          OPENCLAW_AGENT_MODEL: "google/gemini-2.0-flash-exp"
+          OPENCLAW_MODEL: "google/gemini-1.5-flash"
+          OPENCLAW_AGENT_MODEL: "google/gemini-1.5-flash"
           OPENCLAW_SKIP_CHANNELS: "1"
           OPENCLAW_SKIP_PROVIDERS: "1"
           OPENCLAW_WORKSPACE: ${{ github.workspace }}
@@ -45,17 +45,16 @@ jobs:
           echo "I am a helpful AI assistant running in a GitHub Action." > $OPENCLAW_WORKSPACE/SOUL.md
           echo "I am a developer testing OpenClaw in CI." > $OPENCLAW_WORKSPACE/USER.md
 
-          # 3. Create global openclaw.json with the EXACT schema requested by the error
+          # 3. Create global openclaw.json with a simpler schema
           echo '{
             "models": {
               "providers": {
                 "google": {
                   "apiKey": "'"$GEMINI_API_KEY"'",
-                  "baseUrl": "https://generativelanguage.googleapis.com",
                   "models": [
                     { 
-                      "id": "gemini-2.0-flash-exp",
-                      "name": "Gemini 2.0 Flash Experimental"
+                      "id": "gemini-1.5-flash",
+                      "name": "Gemini 1.5 Flash"
                     }
                   ]
                 }
@@ -63,7 +62,7 @@ jobs:
             },
             "agents": {
               "defaults": {
-                "model": "google/gemini-2.0-flash-exp"
+                "model": "google/gemini-1.5-flash"
               }
             }
           }' > /home/runner/.openclaw/openclaw.json
@@ -75,7 +74,6 @@ jobs:
 
           # 5. Run the agent locally
           echo "Running OpenClaw agent locally..."
-          # Note: Removed --model as it was reported as an unknown option
           openclaw agent --local \
             --session-id "ci-session-$(date +%s)" \
             --message "${{ github.event.inputs.prompt }}" > response.txt
